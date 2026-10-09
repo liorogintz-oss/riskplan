@@ -9,3 +9,30 @@ function generate(){const capacity=Math.floor(profile.budget*(1-profile.reserve/
 $('form').addEventListener('submit',e=>{e.preventDefault();profile={org:$('org').value.trim(),type:$('type').value,sector:$('sector').value,employees:+$('employees').value,start:+$('start').value,years:+$('years').value,budget:+$('budget').value,reserve:+$('reserve').value,goals:$('goals').value.trim()};if(!profile.org){$('org').setCustomValidity('יש להזין שם ארגון');$('org').reportValidity();return}if(!risks.length){risks=seed.map(([name,desc,l,i,c,hours])=>({name,desc,l,i,c,hours}));if(['private','listed'].includes(profile.type))risks[0].desc='חריגות רכש, ניגודי עניינים ותלות בספקים';if(profile.sector==='בריאות'){risks.push({name:'בטיחות מטופלים',desc:'אירועי בטיחות ופגיעה באיכות הטיפול',l:4,i:5,c:1,hours:220})}if(profile.sector==='פיננסים'){risks.push({name:'סיכונים פיננסיים',desc:'חשיפות אשראי, נזילות וציות ענפי',l:4,i:5,c:1,hours:220})}if(profile.sector==='תשתיות'){risks.push({name:'בטיחות ותשתיות',desc:'פגיעה בבטיחות ואי זמינות תשתית קריטית',l:4,i:5,c:1,hours:220})}}$('legal').textContent=({public:'גוף ציבורי: יש לבדוק את התחולה לפי הגדרת גוף ציבורי בחוק הביקורת הפנימית ואת מנגנון אישור התוכנית לפי סעיף 7.',municipal:'רשות מקומית: יש לבדוק את הוראות פקודת העיריות או דיני המועצות החלים על הרשות ואת סמכויות המבקר ואישור תוכנית העבודה.',government:'חברה ממשלתית: יש לבדוק את חוק הביקורת הפנימית, חוק החברות הממשלתיות והנחיות רשות החברות החלות על הגוף.',listed:'חברה ציבורית: יש לבדוק את חוק החברות, לרבות ההוראות בדבר מבקר פנימי ותוכנית עבודה, ואת הוראות חוק הביקורת הפנימית המוחלות מכוחו.',private:'חברה פרטית: אין להסיק תחולה אוטומטית של חוק הביקורת הפנימית. יש לבדוק דין ענפי, מאפייני הגוף ודרישות חוזיות או ממשל תאגידי.',ngo:'עמותה / חל״צ: יש לבדוק את הדין החל לפי הצורה המשפטית, מאפייני הגוף והיקף הפעילות. אין להסיק תחולה גורפת של חוק הביקורת הפנימית.'})[profile.type];$('results').hidden=false;render();generate();$('survey').scrollIntoView({behavior:'smooth'});});$('org').addEventListener('input',()=> $('org').setCustomValidity(''));
 $('risks').addEventListener('change',e=>{const key=e.target.dataset.key;if(!key)return;const r=risks[+e.target.dataset.n];if(key==='name'){if(!e.target.value.trim()){e.target.value=r.name;return}r.name=e.target.value.trim()}else{const v=Number(e.target.value),max=key==='hours'?100000:key==='c'?3:5,min=key==='c'?0:1;if(!Number.isInteger(v)||v<min||v>max){e.target.value=r[key];return}r[key]=v}render();generate();});$('risks').addEventListener('click',e=>{const b=e.target.closest('[data-remove]');if(!b)return;risks.splice(+b.dataset.remove,1);render();generate();});$('add').onclick=()=>{risks.push({name:'סיכון חדש',desc:'נדרש תיעוד גורמי הסיכון והבקרות',l:3,i:3,c:0,hours:100});render();generate()};$('generate').onclick=generate;$('print').onclick=()=>window.print();
 $('csv').onclick=()=>{const rows=[['טיוטת סקר ותוכנית ביקורת',profile.org],['תחום פעילות',profile.sector],['עובדים',profile.employees],['יעדים והקשר',profile.goals],['תקציב שנתי',profile.budget],['רזרבה באחוזים',profile.reserve],['הערה','טיוטה לתיקוף מקצועי; בקרות טרם נבדקו'],['תחום','תיאור','סבירות','השפעה','רמת בקרות','סיכון מובנה','סיכון שיורי','שעות','שנה']];risks.forEach(r=>rows.push([r.name,r.desc,r.l,r.i,controlNames[r.c],r.l*r.i,score(r),r.hours,alloc.find(y=>y.tasks.includes(r))?.year||'לא שובץ']));const safe=v=>{const s=String(v);return '"'+(/^[=+@\-\t\r]/.test(s)?"'"+s:s).replaceAll('"','""')+'"'};const blob=new Blob(['\ufeff'+rows.map(row=>row.map(safe).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='riskplan-draft.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+
+// Explicit updates use the latest profile and take the user to the result.
+$('generate').onclick=()=>{
+  if(!$('org').value.trim()) $('org').setCustomValidity('יש להזין שם ארגון');
+  if(!$('form').reportValidity()){
+    $('profile').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  profile={org:$('org').value.trim(),type:$('type').value,sector:$('sector').value,
+    employees:+$('employees').value,start:+$('start').value,years:+$('years').value,
+    budget:+$('budget').value,reserve:+$('reserve').value,goals:$('goals').value.trim()};
+  summary();
+  generate();
+  let status=$('plan-status');
+  if(!status){
+    status=document.createElement('p');
+    status.id='plan-status';
+    status.className='note';
+    status.setAttribute('role','status');
+    status.setAttribute('aria-live','polite');
+    $('plan-caption').insertAdjacentElement('afterend',status);
+  }
+  status.textContent=`תוכנית העבודה עודכנה לפי הנתונים הנוכחיים · ${new Date().toLocaleTimeString('he-IL')} · ${alloc.reduce((n,y)=>n+y.tasks.length,0)} משימות שובצו${pending.length?` · ${pending.length} משימות ללא כיסוי`:''}.`;
+  $('plan').setAttribute('tabindex','-1');
+  $('plan').focus({preventScroll:true});
+  $('plan').scrollIntoView({behavior:'smooth',block:'start'});
+};
