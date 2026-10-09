@@ -60,3 +60,41 @@ function renderMatrix(){
   $('matrix-status').textContent=`${risks.length} סיכונים במפה · מתעדכנת לפי הערכים בטבלה`;
 }
 $('map-mode').addEventListener('change',renderMatrix);
+
+function renderProfessionalReport(){
+  const total=risks.reduce((n,r)=>n+r.hours,0);
+  const scheduled=alloc.reduce((n,y)=>n+y.used,0);
+  const capacity=Math.floor(profile.budget*(1-profile.reserve/100));
+  const high=risks.filter(r=>score(r)>=12).sort((a,b)=>score(b)-score(a));
+  const uncoveredHigh=pending.filter(r=>score(r)>=12);
+  let report=$('executive-report');
+  if(!report){
+    report=document.createElement('div');report.id='executive-report';
+    $('schedule').insertAdjacentElement('beforebegin',report);
+  }
+  report.innerHTML=`<div class="report-heading"><span>טיוטה לתיקוף ואישור מקצועי</span><span>הופק: ${new Date().toLocaleDateString('he-IL')} · אופק: ${profile.start}–${profile.start+profile.years-1}</span></div>
+    <h3>תקציר מנהלים</h3>
+    <p>תוכנית הביקורת של <strong>${escape(profile.org)}</strong> כוללת ${risks.length} תחומי סיכון, מהם ${high.length} בדירוג שיורי גבוה (12 ומעלה). שובצו ${alloc.reduce((n,y)=>n+y.tasks.length,0)} ביקורות בהיקף ${scheduled.toLocaleString('he-IL')} שעות מתוך ${total.toLocaleString('he-IL')} שעות שהוערכו לכלל התחומים.</p>
+    <p><strong>מוקדי עדיפות:</strong> ${high.length?high.slice(0,4).map(r=>escape(r.name)+' ('+score(r)+')').join('، '):'לא זוהו סיכונים גבוהים לפי הדירוגים שהוזנו. יש לתקף את הדירוגים לפני הסקת מסקנות.'}</p>
+    ${profile.goals?`<p><strong>יעדים והקשר שהוזנו:</strong> ${escape(profile.goals)}</p><p class="report-disclosure">היעדים מוצגים כהקשר. הקשר בין כל ביקורת ליעד דורש מיפוי מקצועי; הטקסט החופשי אינו משוקלל אוטומטית בדירוג.</p>`:''}
+    <div class="report-metrics"><div><strong>${capacity.toLocaleString('he-IL')}</strong>שעות למשימות בשנה</div><div><strong>${profile.budget-capacity}</strong>שעות רזרבה בשנה</div><div><strong>${total?Math.round(scheduled/total*100):0}%</strong>כיסוי לפי שעות מוערכות</div></div>
+    <p class="report-disclosure">שיעור הכיסוי מתייחס לשעות של התחומים שהוזנו בלבד; אינו שיעור כיסוי של כלל סיכוני הארגון.</p>
+    <div class="report-gap"><strong>החלטות נדרשות לפני אישור</strong><ul>
+      <li>${pending.length?`לא שובצו ${pending.length} תחומים: ${pending.map(r=>escape(r.name)).join('، ')}. פער המשאבים: ${pending.reduce((n,r)=>n+r.hours,0)} שעות.`:'כל התחומים שהוזנו שובצו; יש לבחון אם יקום הביקורת מלא.'}</li>
+      <li>${uncoveredHigh.length?`נדרשת החלטה מפורשת לגבי סיכונים גבוהים ללא כיסוי: ${uncoveredHigh.map(r=>escape(r.name)).join('، ')}.`:'יש לתקף את הסיכונים הגבוהים ואת נימוקי סדר העדיפויות.'}</li>
+      <li>לאשר זמינות וכישורי צוות, מטלות חובה, תדירות ביקורות ומנגנון עדכון שנתי.</li>
+    </ul></div>`;
+  let details=$('audit-details');
+  if(!details){details=document.createElement('div');details.id='audit-details';$('schedule').insertAdjacentElement('afterend',details);}
+  details.innerHTML=`<h3>כרטיסי ביקורת — היקף מוצע</h3>`+alloc.map(y=>y.tasks.map(r=>`<article class="audit-card">
+    <div class="audit-card-title"><h4>${escape(r.name)}</h4><span>${y.year} · ${r.hours} שעות · סיכון שיורי ${score(r)}</span></div>
+    <p><strong>הסיכון:</strong> ${escape(r.desc)}</p>
+    <p><strong>מטרת הביקורת המוצעת:</strong> להעריך אם הבקרות בתחום ${escape(r.name)} מתוכננות ומיושמות באופן שמצמצם את הסיכון המתואר.</p>
+    <p><strong>היקף ובדיקות מוצעים:</strong> מיפוי התהליך והאחריות, סקירת נהלים והרשאות, ראיונות עם בעלי תפקידים ובדיקת מדגם של פעולות ובקרות. התקופה, גודל המדגם והמערכות ייקבעו בתכנון המשימה.</p>
+    <p><strong>נימוק התעדוף:</strong> סבירות ${r.l}/5 × השפעה ${r.i}/5 = סיכון מובנה ${r.l*r.i}; בקרות שהוערכו כ״${controlNames[r.c]}״, הפחתה משוערת ${reductions[r.c]*100}%, וציון שיורי ${score(r)}. השיבוץ לשנת ${y.year} נקבע לפי דירוג וקיבולת, ולא מכוח דרישה משפטית.</p>
+    <p><strong>תוצר מתוכנן:</strong> ממצאים מבוססי ראיות, המלצות ותוכנית פעולות עם אחראים ומועדי יעד, לתיאום עם הגורמים המבוקרים.</p>
+    <p class="report-disclosure">מקור הדירוג: הערכות שהוזנו בכלי. ראיות לבקרות, בעל הסיכון, כישורים ייעודיים והיקף סופי: טרם תועדו ויש להשלים לפני אישור.</p>
+    </article>`).join('')).join('')+`<div class="report-gap"><strong>מתודולוגיה ומגבלות</strong><p>הסקר מבוסס על תחומים מוצעים והערכות משתמש, ללא איסוף ראיות עצמאי. הבקרות טרם נבדקו. המנוע משבץ כל תחום פעם אחת, לפי ציון שיורי יורד ובשנה המוקדמת שבה יש קיבולת; הוא אינו מפצל משימה בין שנים. רזרבה: ${profile.reserve}%. בדיקות חובה וביקורות חוזרות דורשות החלטה מקצועית.</p><p>המסגרת מתייחסת לעקרונות תקני IIA 9.1, 9.4 ו־10.1–10.3. תחולת הדין בישראל והעמידה בחוק ובתקנים דורשות אימות מקצועי נפרד.</p><p>שם המבקר/ת: __________________ &nbsp; הגורם המאשר: __________________ &nbsp; תאריך אישור: __________________</p></div>`;
+}
+const generateBase=generate;
+generate=function(){generateBase();renderProfessionalReport();};
