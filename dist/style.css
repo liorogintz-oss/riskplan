@@ -13,3 +13,5 @@
 #privacy-check>p,#privacy-report>p,#privacy-report li{font-size:12px;line-height:1.9}#privacy-report{margin-top:28px}#privacy-report td{vertical-align:top;overflow-wrap:anywhere}@media print{#privacy-check{display:none!important}#privacy-report .table-wrap{overflow:visible}#privacy-report tr{break-inside:avoid}}
 
 #gov-profile .fields{margin:15px 0}#gov-report{margin:25px 0}#gov-report p,#gov-register>p,#gov-requirements>p{font-size:12px;line-height:1.9}#gov-report td{vertical-align:top;overflow-wrap:anywhere}@media print{#gov-register,#gov-requirements{display:none!important}#gov-report .table-wrap{overflow:visible}#gov-report tr{break-inside:avoid}}
+
+.bank-metrics{min-width:850px}.bank-metrics input{min-width:80px!important;width:100%!important}.bank-metrics td{vertical-align:top}#bank-report p,#bank-report li,#bank-register>p,#bank-requirements>p{font-size:12px;line-height:1.9}#bank-report td{vertical-align:top;overflow-wrap:anywhere}#bank-profile .fields{margin:15px 0}@media print{#bank-register,#bank-requirements{display:none!important}#bank-report .table-wrap{overflow:visible}#bank-report tr{break-inside:avoid}}
