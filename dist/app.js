@@ -80,7 +80,7 @@ function renderProfessionalReport(){
     <div class="report-metrics"><div><strong>${capacity.toLocaleString('he-IL')}</strong>שעות למשימות בשנה</div><div><strong>${profile.budget-capacity}</strong>שעות רזרבה בשנה</div><div><strong>${total?Math.round(scheduled/total*100):0}%</strong>כיסוי לפי שעות מוערכות</div></div>
     <p class="report-disclosure">שיעור הכיסוי מתייחס לשעות של התחומים שהוזנו בלבד; אינו שיעור כיסוי של כלל סיכוני הארגון.</p>
     <div class="report-gap"><strong>החלטות נדרשות לפני אישור</strong><ul>
-      <li>${pending.length?`לא שובצו ${pending.length} תחומים: ${pending.map(r=>escape(r.name)).join('، ')}. פער המשאבים: ${pending.reduce((n,r)=>n+r.hours,0)} שעות.`:'כל התחומים שהוזנו שובצו; יש לבחון אם יקום הביקורת מלא.'}</li>
+      <li>${pending.length?`לא שובצו ${pending.length} תחומים: ${pending.map(r=>escape(r.name)).join('، ')}. פער המשאבים: ${pending.reduce((n,r)=>n+r.hours,0)} שעות.`:'כל התחומים שהוזנו שובצו; יש לבחון אם מכלול תחומי הביקורת (Audit Universe) מלא.'}</li>
       <li>${uncoveredHigh.length?`נדרשת החלטה מפורשת לגבי סיכונים גבוהים ללא כיסוי: ${uncoveredHigh.map(r=>escape(r.name)).join('، ')}.`:'יש לתקף את הסיכונים הגבוהים ואת נימוקי סדר העדיפויות.'}</li>
       <li>לאשר זמינות וכישורי צוות, מטלות חובה, תדירות ביקורות ומנגנון עדכון שנתי.</li>
     </ul></div>`;
